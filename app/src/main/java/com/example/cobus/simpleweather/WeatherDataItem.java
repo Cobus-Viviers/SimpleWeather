@@ -24,7 +24,7 @@ class WeatherDataItem {
     String getMaxTemp() {
         if(mMaxTemp == -990)
             return Integer.toString(-99);
-        return Integer.toString((int) Math.round(mMaxTemp/10));
+        return Integer.toString((int) Math.round(mMaxTemp));
     }
 
     public void setMaxTemp(double mMaxTemp) {
@@ -34,7 +34,7 @@ class WeatherDataItem {
     String getMinTemp() {
         if(mMinTemp == 990)
             return Integer.toString(99);
-        return Integer.toString((int) Math.round(mMinTemp/10));
+        return Integer.toString((int) Math.round(mMinTemp));
     }
 
     public void setMinTemp(double mMinTemp) {
