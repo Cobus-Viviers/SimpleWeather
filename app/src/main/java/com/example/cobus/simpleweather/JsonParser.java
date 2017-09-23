@@ -1,49 +1,104 @@
 package com.example.cobus.simpleweather;
 
+import android.util.Log;
+
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class JsonParser {
-    JSONObject mWeatherData;
+    private JSONObject mWeatherData;
+    private List<WeatherDataItem> mWeatherDataItems;
+    private static final String DATE_FORMAT = "yyyy-MM-dd";
 
     public JsonParser(String JSONString) {
         try{
+            if(JSONString == null || JSONString.equals(""))
+                return;
             mWeatherData = new JSONObject(JSONString);
+            mWeatherDataItems = null;
+            mWeatherDataItems = new ArrayList<WeatherDataItem>();
+            populateWeatherDataItems();
         }catch (JSONException e){
             e.printStackTrace();
         }
     }
 
-    public String getMaxTemp(){
-        String Temp = null;
-        try{
-            Temp = mWeatherData.getJSONObject("main").getString("temp_max");
+    //Converts the 3 hour interval data from the Json string to WeatherDataItem objects
+    //Each object represents a day
+    private void populateWeatherDataItems(){
+        try {
+            JSONArray weatherList = mWeatherData.getJSONArray("list");
+
+            String currentDate = getDateFromDateString(
+                    weatherList.getJSONObject(0).getString("dt_txt"));
+
+            //Create WeatherDataItems
+            double currentMin = 990;
+            double currentMax = -990;
+            int icon = getIcon(weatherList.getJSONObject(0));
+            for (int i = 0; i < weatherList.length()-1; i++){
+                String nextDate =
+                        getDateFromDateString(weatherList.getJSONObject(i +1).getString("dt_txt"));
+                double max = getMaxTemp(weatherList.getJSONObject(i));
+                double min = getMinTemp(weatherList.getJSONObject(i));
+                if(currentMin > min)
+                    currentMin = min;
+                if(currentMax < max)
+                    currentMax = max;
+
+                if(!currentDate.equals(nextDate)){
+                    mWeatherDataItems.add(new WeatherDataItem(currentDate, DATE_FORMAT, currentMax, currentMin, icon));
+                    icon = getIcon(weatherList.getJSONObject(i+1));
+                    currentDate = nextDate;
+                }
+            }
         }catch (JSONException e){
             e.printStackTrace();
         }
-        return Integer.toString((int) Math.round(Double.parseDouble(Temp)/10));
+
+    }
+    private static String getDateFromDateString(String dateString){
+        if(dateString == null || dateString.equals(""))
+            return null;
+        return dateString.substring(0,10);
     }
 
-    public String getMinTemp(){
-        String Temp = null;
+    private double getMaxTemp(JSONObject obj){
+        double Temp = -99;
         try{
-            Temp = mWeatherData.getJSONObject("main").getString("temp_min");
+            Temp = obj.getJSONObject("main").getDouble("temp_max");
         }catch (JSONException e){
             e.printStackTrace();
         }
-        return Integer.toString((int) Math.round(Double.parseDouble(Temp)/10));
+        return Temp;
+    }
+
+    private double getMinTemp(JSONObject obj){
+        double Temp = 99;
+        try{
+            Temp = obj.getJSONObject("main").getDouble("temp_min");
+        }catch (JSONException e){
+            e.printStackTrace();
+        }
+        return Temp;
     }
 
     public String getLocation(){
+        if(!hasData())
+            return null;
         String country = null;
         String area = null;
         try{
-            country = mWeatherData.getJSONObject("sys").getString("country");
-            Locale locale = new Locale("", country);
-            country = locale.getDisplayCountry();
-            area = mWeatherData.getString("name");
+             country = mWeatherData.getJSONObject("city").getString("country");
+             area = mWeatherData.getJSONObject("city").getString("name");
+
+             Locale locale = new Locale("", country);
+             country = locale.getDisplayCountry();
 
         }catch (JSONException e){
             e.printStackTrace();
@@ -51,30 +106,30 @@ public class JsonParser {
         return area + ", " + country;
     }
 
-    public int getIcon(){
+    private int getIcon(JSONObject obj){
         int id = 0;
         try{
-            String description = mWeatherData.getJSONArray("weather").getJSONObject(0).getString("description");
+            String description = obj.getJSONArray("weather").getJSONObject(0).getString("icon");
+            description = description.substring(0,2);
             switch (description){
-                case "clear sky": id = R.drawable.art_clear;
+                case "01": id = R.drawable.art_clear;
                     break;
-                case "few clouds": id = R.drawable.art_light_clouds;
+                case "02": id = R.drawable.art_light_clouds;
                     break;
-                case "scattered clouds": id = R.drawable.art_clouds;
+                case "03":
+                case "04": id = R.drawable.art_clouds;
                     break;
-                case "broken clouds": id = R.drawable.art_clouds;
+                case "09": id = R.drawable.art_light_rain;
                     break;
-                case "shower rain": id = R.drawable.art_light_rain;
+                case "10": id = R.drawable.art_rain;
                     break;
-                case "rain": id = R.drawable.art_rain;
+                case "11": id = R.drawable.art_storm;
                     break;
-                case "thunderstorm": id = R.drawable.art_storm;
+                case "13": id = R.drawable.art_snow;
                     break;
-                case "snow": id = R.drawable.art_snow;
+                case "50": id = R.drawable.art_fog;
                     break;
-                case "mist": id = R.drawable.art_fog;
-                    break;
-                default: id = 0;
+                default: id = R.drawable.art_clear;
             }
         }catch (JSONException e){
             e.printStackTrace();
@@ -82,5 +137,20 @@ public class JsonParser {
         return id;
     }
 
+    public WeatherDataItem getTodaysWeather(){
+        if(!hasData())
+            return null;
+        return mWeatherDataItems.get(0);
+    }
+
+    public WeatherDataItem[] getWeatherDataItems(){
+        if(!hasData())
+            return null;
+        return mWeatherDataItems.toArray(new WeatherDataItem[mWeatherDataItems.size()]);
+    }
+
+    public boolean hasData(){
+        return mWeatherDataItems.size() > 0;
+    }
 
 }

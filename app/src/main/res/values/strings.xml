@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">Simple Weather App</string>
+    <string name="app_name">Weather</string>
     <string name="temperature">%1$s: %2$s°C</string>
     <string name="general_error">Error: could not retrieve your data, please check your location settings
         and internet connectivity before trying again</string>
+    <string name="literal_error">error</string>
 </resources>

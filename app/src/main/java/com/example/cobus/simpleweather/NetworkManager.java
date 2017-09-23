@@ -13,7 +13,7 @@ import java.net.URL;
 import java.util.Scanner;
 
 public final class NetworkManager {
-    private final static String BASE_URL = "http://api.openweathermap.org/data/2.5/weather";
+    private final static String BASE_URL = "http://api.openweathermap.org/data/2.5/forecast";
     private final static String LATITUDE = "lat";
     private final static String LONGITUDE = "lon";
     private final static String API_KEY = "appid";
