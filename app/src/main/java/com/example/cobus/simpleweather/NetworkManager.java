@@ -12,20 +12,19 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
 
-public final class NetworkManager {
+final class NetworkManager {
     private final static String BASE_URL = "http://api.openweathermap.org/data/2.5/forecast";
     private final static String LATITUDE = "lat";
     private final static String LONGITUDE = "lon";
     private final static String API_KEY = "appid";
     private final static String apiKey = "71b35bc21aab484b3a31c30e1a5a3537";
 
-    public static URL buildUrl(String latitude, String logitude){
+    static URL buildUrl(String latitude, String longitude){
         Uri uri = Uri.parse(BASE_URL).buildUpon()
                 .appendQueryParameter(LATITUDE, latitude)
-                .appendQueryParameter(LONGITUDE, logitude)
+                .appendQueryParameter(LONGITUDE, longitude)
                 .appendQueryParameter(API_KEY, apiKey)
                 .build();
-
 
         URL url = null;
         try{
@@ -36,7 +35,7 @@ public final class NetworkManager {
         return url;
     }
 
-    public static String getApiData(URL url) throws IOException{
+    static String getApiData(URL url) throws IOException{
        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
         try{
             InputStream stream = connection.getInputStream();

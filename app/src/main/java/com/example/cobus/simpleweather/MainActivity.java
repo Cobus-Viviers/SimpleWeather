@@ -10,7 +10,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-//import android.util.Log;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -38,7 +37,8 @@ public class MainActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener,
         com.google.android.gms.location.LocationListener {
 
-    private static final String LOG_TAG = "Main_InfoLog";
+    private static final int REFRESH_DELAY = 1000 * 60 * 5;
+
     TextView mDateTextView;
     TextView mMaxTempTextView;
     TextView mMinTempTextView;
@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements
         mRecyclerView = (RecyclerView)findViewById(R.id.recyclerview_daily_forecast);
 
         showProgressBar();
+
         LinearLayoutManager manager
                 = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(manager);
@@ -85,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements
                 .build();
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-        mLocationRequest.setInterval(1000 * 60 * 15 );
+        mLocationRequest.setInterval(REFRESH_DELAY);
     }
 
     @Override
@@ -125,29 +126,28 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         if(!connectionResult.hasResolution()){
             GoogleApiAvailability.getInstance().getErrorDialog(this, connectionResult.getErrorCode(), 0).show();
-            return;
         }
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-        Log.i(LOG_TAG, "Connection suspended");
+        Log.i("Connection Status", "Connection suspended");
     }
 
     @Override
     public void onLocationChanged(Location location) {
         if(location == null){
-            Log.e("show error", "location changed location null");
+            Log.e("Show Error", "onLocationChanged: location null");
             showError();
             return;
         }
         URL url = NetworkManager.buildUrl(Double.toString(location.getLatitude()),
                 Double.toString(location.getLongitude()));
-        new NetworkAsycTask().execute(url);
-        Log.i("test", url.toString());
+        new NetworkAsyncTask().execute(url);
+        Log.i("API URL", url.toString());
     }
 
     @Override
@@ -164,13 +164,13 @@ public class MainActivity extends AppCompatActivity implements
                     showData();
                 }
                 else{
-                    Log.e("show error", "location access permission denied");
+                    Log.e("Show Error", "onRequestPermissionResult: Location permission denied");
                     showError();
                 }
         }
     }
 
-    class NetworkAsycTask extends AsyncTask<URL, Void, String>{
+    private class NetworkAsyncTask extends AsyncTask<URL, Void, String>{
 
         @Override
         protected void onPreExecute() {
@@ -178,10 +178,10 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         @Override
-        protected String doInBackground(URL... params) {
+        protected String doInBackground(URL... urls) {
             String json = null;
             try{
-                json = NetworkManager.getApiData(params[0]);
+                json = NetworkManager.getApiData(urls[0]);
             }catch (IOException e){
                 e.printStackTrace();
             }
@@ -196,33 +196,34 @@ public class MainActivity extends AppCompatActivity implements
 
     private void displayWeatherDataFromJson(String Json){
         if(Json == null || Json.equals("")){
-            Log.e("show error", "Json null");
+            Log.e("Show Error", "displayWeatherDataFromJson Json string is null");
             showError();
             return;
         }
         JsonParser parser = new JsonParser(Json);
         if(!parser.hasData()){
-            Log.e("show error", "Json not recognized");
+            Log.e("Show Error", "displayWeatherDataFromJson Json improperly formatted");
             showError();
             return;
         }
         WeatherDataItem currentWeather = parser.getTodaysWeather();
 
         String temperature = String.format(getResources().getString(R.string.temperature),
-                "Max", currentWeather.getmMaxTemp());
+                "Max", currentWeather.getMaxTemp());
         mMaxTempTextView.setText(temperature);
 
         temperature = String.format(getResources().getString(R.string.temperature),
-                "Min", currentWeather.getmMinTemp());
+                "Min", currentWeather.getMinTemp());
         mMinTempTextView.setText(temperature);
         mDateTextView.setText(getTodaysDate());
         mLocationTextView.setText(parser.getLocation());
-        mWeatherImageView.setImageResource(currentWeather.getmIcon());
+        mWeatherImageView.setImageResource(currentWeather.getIcon());
 
         mRecyclerViewAdapter = new RecyclerViewAdapter(this, parser.getWeatherDataItems());
         mRecyclerView.setAdapter(mRecyclerViewAdapter);
         showData();
     }
+
     private String getTodaysDate(){
         DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy", Locale.ENGLISH);
         Date date = new Date();

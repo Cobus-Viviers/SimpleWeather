@@ -10,18 +10,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class JsonParser {
+class JsonParser {
     private JSONObject mWeatherData;
     private List<WeatherDataItem> mWeatherDataItems;
     private static final String DATE_FORMAT = "yyyy-MM-dd";
 
-    public JsonParser(String JSONString) {
+    JsonParser(String JSONString) {
         try{
             if(JSONString == null || JSONString.equals(""))
                 return;
             mWeatherData = new JSONObject(JSONString);
             mWeatherDataItems = null;
-            mWeatherDataItems = new ArrayList<WeatherDataItem>();
+            mWeatherDataItems = new ArrayList<>();
             populateWeatherDataItems();
         }catch (JSONException e){
             e.printStackTrace();
@@ -41,6 +41,7 @@ public class JsonParser {
             double currentMin = 990;
             double currentMax = -990;
             int icon = getIcon(weatherList.getJSONObject(0));
+
             for (int i = 0; i < weatherList.length()-1; i++){
                 String nextDate =
                         getDateFromDateString(weatherList.getJSONObject(i +1).getString("dt_txt"));
@@ -52,7 +53,8 @@ public class JsonParser {
                     currentMax = max;
 
                 if(!currentDate.equals(nextDate)){
-                    mWeatherDataItems.add(new WeatherDataItem(currentDate, DATE_FORMAT, currentMax, currentMin, icon));
+                    mWeatherDataItems.add(new WeatherDataItem
+                            (currentDate, DATE_FORMAT, currentMax, currentMin, icon));
                     icon = getIcon(weatherList.getJSONObject(i+1));
                     currentDate = nextDate;
                 }
@@ -79,16 +81,16 @@ public class JsonParser {
     }
 
     private double getMinTemp(JSONObject obj){
-        double Temp = 99;
+        double temperature = 99;
         try{
-            Temp = obj.getJSONObject("main").getDouble("temp_min");
+            temperature = obj.getJSONObject("main").getDouble("temp_min");
         }catch (JSONException e){
             e.printStackTrace();
         }
-        return Temp;
+        return temperature;
     }
 
-    public String getLocation(){
+    String getLocation(){
         if(!hasData())
             return null;
         String country = null;
@@ -137,19 +139,19 @@ public class JsonParser {
         return id;
     }
 
-    public WeatherDataItem getTodaysWeather(){
+    WeatherDataItem getTodaysWeather(){
         if(!hasData())
             return null;
         return mWeatherDataItems.get(0);
     }
 
-    public WeatherDataItem[] getWeatherDataItems(){
+    WeatherDataItem[] getWeatherDataItems(){
         if(!hasData())
             return null;
         return mWeatherDataItems.toArray(new WeatherDataItem[mWeatherDataItems.size()]);
     }
 
-    public boolean hasData(){
+    boolean hasData(){
         return mWeatherDataItems.size() > 0;
     }
 

@@ -28,7 +28,8 @@
                 android:layout_width="100dp"
                 android:layout_height="100dp"
                 android:id="@+id/iv_weather_image"
-                android:layout_gravity="center"/>
+                android:layout_gravity="center"
+                android:contentDescription="@string/weather_condition_image"/>
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
