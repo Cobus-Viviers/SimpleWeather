@@ -55,6 +55,8 @@ class JsonParser {
                 if(!currentDate.equals(nextDate)){
                     mWeatherDataItems.add(new WeatherDataItem
                             (currentDate, DATE_FORMAT, currentMax, currentMin, icon));
+                    currentMax = -99;
+                    currentMin = 99;
                     icon = getIcon(weatherList.getJSONObject(i+1));
                     currentDate = nextDate;
                 }
